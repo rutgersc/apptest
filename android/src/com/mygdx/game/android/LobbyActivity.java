@@ -25,6 +25,8 @@ public class LobbyActivity extends Activity implements LocationListener {
     boolean mIsLocationProviderEnabled;
     boolean mIsGpsUpdaterEnabled;
 
+    Location mCurrentBestLocation;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -57,7 +59,6 @@ public class LobbyActivity extends Activity implements LocationListener {
         }
     }
 
-
     @Override
     protected void onResume () {
         super.onResume();
@@ -89,10 +90,35 @@ public class LobbyActivity extends Activity implements LocationListener {
     }
 
     @Override
+    protected void onStart() {
+        super.onStart();
+
+
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        Log.d(TAG, "OnStop" );
+    }
+
+    private boolean isBetterLocation(Location location, Location currentBestLocation) {
+
+        //TODO: Add logic
+        return true;
+    }
+
+    @Override
     public void onLocationChanged(Location location) {
-        if(location != null)
+        if(location != null) {
             Log.d("Lobby", "New Location " + locationToString(location));
-        //mLocationManager.removeUpdates(this);
+            //mLocationManager.removeUpdates(this);
+
+            if (isBetterLocation(location, mCurrentBestLocation)) {
+                //TODO: Send update to dinges
+            }
+        }
     }
 
     @Override

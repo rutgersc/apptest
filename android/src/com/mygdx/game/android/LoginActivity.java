@@ -5,23 +5,27 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AutoCompleteTextView;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Switch;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.IOException;
 
 
 public class LoginActivity extends Activity {
+    private final String TAG = "LoginActivity";
 
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-    private UserLoginTask mAuthTask = null;
+    private AsyncTask mAuthTask = null;
 
     // UI references.
     private AutoCompleteTextView mUsernameView;
@@ -38,9 +42,7 @@ public class LoginActivity extends Activity {
         mLoginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(LoginActivity.this, LobbyActivity.class);
-                startActivity(intent);
-                //TODO: attemptLogin();
+                onLogin();
             }
         });
 
@@ -50,8 +52,9 @@ public class LoginActivity extends Activity {
         mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
+
                 if (id == R.id.login || id == EditorInfo.IME_NULL) {
-                    attemptLogin();
+                    onLogin();
                     return true;
                 }
                 return false;
@@ -75,6 +78,28 @@ public class LoginActivity extends Activity {
         });
     }
 
+    /**
+     * Will log in as GUEST or as USER
+     */
+    public void onLogin() {
+        if(mGuestLoginSwitch.isChecked()) {
+            attemptGuestLogin();
+        } else {
+            attemptLogin();
+        }
+    }
+
+    public void attemptGuestLogin() {
+        if (mAuthTask != null) {
+            return;
+        }
+
+        //TODO: showProgress(true);
+        GuestLoginTask guestLoginTask = new GuestLoginTask();
+        mAuthTask = guestLoginTask;
+        guestLoginTask.execute((Void) null);
+    }
+
     public void attemptLogin() {
         if (mAuthTask != null) {
             return;
@@ -91,17 +116,17 @@ public class LoginActivity extends Activity {
         boolean cancel = false;
         View focusView = null;
 
-        // Check for a valid password.
-        if (!TextUtils.isEmpty(password)) {
-            mPasswordView.setError(getString(R.string.error_field_required));
-            focusView = mPasswordView;
-            cancel = true;
-        }
-
-        // Check for a valid email address.
+        // Check for a valid username
         if (TextUtils.isEmpty(username)) {
             mUsernameView.setError(getString(R.string.error_field_required));
             focusView = mUsernameView;
+            cancel = true;
+        }
+
+        // Check for a valid password.
+        if (TextUtils.isEmpty(password)) {
+            mPasswordView.setError(getString(R.string.error_field_required));
+            focusView = mPasswordView;
             cancel = true;
         }
 
@@ -113,48 +138,36 @@ public class LoginActivity extends Activity {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             //TODO: showProgress(true);
-            mAuthTask = new UserLoginTask(username, password);
-            mAuthTask.execute((Void) null);
+            UserLoginTask userLoginTask = new UserLoginTask(username, password);
+            mAuthTask = userLoginTask;
+            userLoginTask.execute((Void) null);
         }
     }
 
-
     /**
-     * Represents an asynchronous login/registration task used to authenticate
-     * the user.
+     * Represents an asynchronous login/registration task used to authenticate the user.
      */
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
-        private final String mEmail;
+        private final String mUsername;
         private final String mPassword;
 
-        UserLoginTask(String email, String password) {
-            mEmail = email;
+        UserLoginTask(String username, String password) {
+            mUsername = username;
             mPassword = password;
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
 
             try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
+                SecureServerConnection conn = new SecureServerConnection(LoginActivity.this);
+                return conn.login(mUsername, mPassword);
+
+            } catch (IOException e) {
+                e.printStackTrace();
                 return false;
             }
-
-            /*
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
-                }
-            }*/
-
-            // TODO: register the new account here.
-            return true;
         }
 
         @Override
@@ -163,7 +176,8 @@ public class LoginActivity extends Activity {
             //TODO: showProgress(false);
 
             if (success) {
-                finish();
+                Toast.makeText(getApplicationContext(), "Logged in as: " + mUsername, Toast.LENGTH_LONG).show();
+                startActivity(new Intent(LoginActivity.this, LobbyActivity.class));
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
@@ -177,5 +191,50 @@ public class LoginActivity extends Activity {
         }
     }
 
+
+    /**
+     * Represents an asynchronous login/registration task used to authenticate the guest.
+     */
+    public class GuestLoginTask extends AsyncTask<Void, Void, String> {
+
+        GuestLoginTask() {}
+
+        @Override
+        protected String doInBackground(Void... params) {
+
+            // Will return the new name of the guest (ex. guest1234) if successful.
+            try {
+                SecureServerConnection conn = new SecureServerConnection(LoginActivity.this);
+                return conn.guestLogin();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                return "";
+            }
+        }
+
+        @Override
+        protected void onPostExecute(final String guestName) {
+            mAuthTask = null;
+            //TODO: showProgress(false);
+
+            Log.d(LoginActivity.this.TAG, "Guest logged in as: " + guestName);
+
+            if (!guestName.equals("")) { // if logging in was successful
+
+                Toast.makeText(getApplicationContext(), "Logged in as: " + guestName, Toast.LENGTH_LONG).show();
+                startActivity(new Intent(LoginActivity.this, LobbyActivity.class));
+            } else {
+                mPasswordView.setError(getString(R.string.error_incorrect_password));
+                mPasswordView.requestFocus();
+            }
+        }
+
+        @Override
+        protected void onCancelled() {
+            mAuthTask = null;
+            //TODO: showProgress(false);
+        }
+    }
 
 }
