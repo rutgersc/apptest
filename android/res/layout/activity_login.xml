@@ -13,7 +13,8 @@
         android:layout_height="wrap_content"
         android:padding="10dp"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp">
+        android:layout_marginTop="50dp"
+        android:id="@+id/relativeLayout">
 
         <RelativeLayout
             android:id="@+id/loginDetails"
@@ -70,5 +71,16 @@
 
 
     </RelativeLayout>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="SKIP_LOGIN"
+        android:id="@+id/debugButton_skipLogin"
+        android:layout_below="@+id/relativeLayout"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="94dp"
+        android:textSize="25dp"
+        android:padding="20dp" />
 
 </RelativeLayout>

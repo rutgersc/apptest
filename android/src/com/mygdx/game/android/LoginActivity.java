@@ -10,6 +10,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Switch;
@@ -76,6 +77,18 @@ public class LoginActivity extends Activity {
                 }
             }
         });
+
+        Button mDebugButton_skipLogin = (Button)findViewById(R.id.debugButton_skipLogin);
+        mDebugButton_skipLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                openLobby();
+            }
+        });
+    }
+
+    public void openLobby() {
+        startActivity(new Intent(LoginActivity.this, LobbyActivity.class));
     }
 
     /**
@@ -177,7 +190,7 @@ public class LoginActivity extends Activity {
 
             if (success) {
                 Toast.makeText(getApplicationContext(), "Logged in as: " + mUsername, Toast.LENGTH_LONG).show();
-                startActivity(new Intent(LoginActivity.this, LobbyActivity.class));
+                openLobby();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
@@ -223,7 +236,7 @@ public class LoginActivity extends Activity {
             if (!guestName.equals("")) { // if logging in was successful
 
                 Toast.makeText(getApplicationContext(), "Logged in as: " + guestName, Toast.LENGTH_LONG).show();
-                startActivity(new Intent(LoginActivity.this, LobbyActivity.class));
+                openLobby();
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();

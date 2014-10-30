@@ -42,7 +42,7 @@ public class LobbyActivity extends Activity implements LocationListener {
         mLoginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(LobbyActivity.this, AndroidGameLauncher.class);
+                Intent intent = new Intent(LobbyActivity.this, AndroidLauncher.class);
                 startActivity(intent);
             }
         });
