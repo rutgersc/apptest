@@ -34,16 +34,25 @@ public class LoginActivity extends Activity {
 
     Switch mGuestLoginSwitch;
 
+    boolean TEMP_DEBUG_ON = true;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
+
+
         ImageButton mLoginButton = (ImageButton) findViewById(R.id.buttonLogin);
         mLoginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                onLogin();
+
+                if(TEMP_DEBUG_ON) {
+                    openLobby();
+                }else {
+                    onLogin();
+                }
             }
         });
 
@@ -85,6 +94,10 @@ public class LoginActivity extends Activity {
                 openLobby();
             }
         });
+
+        if(TEMP_DEBUG_ON) {
+            mDebugButton_skipLogin.setVisibility(View.INVISIBLE);
+        }
     }
 
     public void openLobby() {
