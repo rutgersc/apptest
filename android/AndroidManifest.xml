@@ -22,40 +22,38 @@
         android:theme="@style/GdxDarkTheme" >
 
     <!-- <meta-data  android:value="AIzaSyBVUCa9icXJpgcsI-6Xp5zzkmxKWrUeuPM" android:name="com.google.android.maps.v2.API_KEY"  /> <!- rutger thuis -->
-         <meta-data android:value="AIzaSyDXzBMlltE5XgDGqoDifRUIMEeS7zqUhSI" android:name="com.google.android.maps.v2.API_KEY"/> <!-- rutger laptop -->
-        <meta-data
-            android:name="com.google.android.maps.v2.API_KEY"
-            android:value="AIzaSyBqkwpJJ23ARt6gNltYsUgQCSUjz-Dc9ZM"/>
+    <!-- <meta-data android:value="AIzaSyDXzBMlltE5XgDGqoDifRUIMEeS7zqUhSI" android:name="com.google.android.maps.v2.API_KEY"/> <!- rutger laptop -->
+    <!-- <meta-data android:name="com.google.android.maps.v2.API_KEY" android:value="AIzaSyBqkwpJJ23ARt6gNltYsUgQCSUjz-Dc9ZM"/> <!- Callan laptop -->
 
 
-        <meta-data
-            android:name="com.google.android.gms.version"
-            android:value="@integer/google_play_services_version" />
+            <meta-data
+                android:name="com.google.android.gms.version"
+                android:value="@integer/google_play_services_version" />
 
-        <activity
-            android:name=".AndroidLauncher"
-            android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
-            android:label="@string/app_name" >
-        </activity>
+            <activity
+                android:name=".AndroidLauncher"
+                android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
+                android:label="@string/app_name" >
+            </activity>
 
-        <activity
-            android:name=".LoginActivity"
-            android:label="@string/title_activity_login" >
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+            <activity
+                android:name=".LoginActivity"
+                android:label="@string/title_activity_login" >
+                <intent-filter>
+                    <action android:name="android.intent.action.MAIN" />
+                    <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>
+            </activity>
 
-        <activity
-            android:name=".LobbyActivity"
-            android:label="@string/title_activity_lobby" >
-        </activity>
+            <activity
+                android:name=".LobbyActivity"
+                android:label="@string/title_activity_lobby" >
+            </activity>
 
-    </application>
+        </application>
 
-    <uses-feature
-        android:glEsVersion="0x00020000"
-        android:required="true"/>
+        <uses-feature
+            android:glEsVersion="0x00020000"
+            android:required="true"/>
 
-</manifest>
+    </manifest>
