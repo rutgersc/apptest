@@ -21,12 +21,19 @@
         android:label="@string/app_name"
         android:theme="@style/GdxDarkTheme" >
 
-    <!-- <meta-data  android:value="AIzaSyBVUCa9icXJpgcsI-6Xp5zzkmxKWrUeuPM" android:name="com.google.android.maps.v2.API_KEY"  /> <!- rutger thuis -->
-         <meta-data android:value="AIzaSyDXzBMlltE5XgDGqoDifRUIMEeS7zqUhSI" android:name="com.google.android.maps.v2.API_KEY"/> <!-- rutger laptop -->
+<<<<<<< HEAD
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyBqkwpJJ23ARt6gNltYsUgQCSUjz-Dc9ZM"/>
 
+        <!--<meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyBVUCa9icXJpgcsI-6Xp5zzkmxKWrUeuPM"/>-->
+=======
+    <!-- <meta-data  android:value="AIzaSyBVUCa9icXJpgcsI-6Xp5zzkmxKWrUeuPM" android:name="com.google.android.maps.v2.API_KEY"  /> <!- rutger thuis -->
+         <meta-data android:value="AIzaSyDXzBMlltE5XgDGqoDifRUIMEeS7zqUhSI" android:name="com.google.android.maps.v2.API_KEY"/> <!-- rutger laptop -->
+
+>>>>>>> a8083a262711df4a9327684ebbd04f1244787ba3
 
         <meta-data
             android:name="com.google.android.gms.version"
