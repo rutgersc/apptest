@@ -19,6 +19,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
@@ -30,22 +31,26 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
     private final String TAG = "Lobby";
 
-    ConnectToServerTask mConnectToServerTask = null;
-    ServerConnection mServerConnection;
-    LoginSession mLoginSession;
-
+    private static final int SETTING__GPS_MINIMAL_INTERVAL = 1000; // milliseconds
+    private static final int SETTING__GPS_MINIMAL_DISTANCE = 0; // meters
     String locationProvider = LocationManager.NETWORK_PROVIDER;
     //String locationProvider = LocationManager.GPS_PROVIDER;
 
     LocationManager mLocationManager;
     boolean mIsLocationProviderEnabled;
-    boolean mIsGpsUpdaterEnabled;
+    boolean mIsGpsUpdaterSetup;
+    boolean mStartGpsUpdaterOnResume = true;
 
     Location mCurrentBestLocation;
-
     GoogleMap mGoogleMap;
-    MarkerOptions mYouMarker;
-    List<MarkerOptions> mPlayerMarkers;
+    Marker mYouMarker;
+    List<Marker> mPlayerMarkers;
+
+    ConnectToServerTask mConnectToServerTask = null;
+    RequestUpdatePlayersTask mRequestUpdatePlayersTask = null;
+    ServerConnection mServerConnection;
+    LoginSession mLoginSession;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,19 +86,12 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         // Set up Google Maps
         //
         setupMapIfNeeded();
-        mPlayerMarkers = new ArrayList<MarkerOptions>();
-        mYouMarker = new MarkerOptions();
+        mPlayerMarkers = new ArrayList<Marker>();
 
         Location lastKnownLocation = mLocationManager.getLastKnownLocation(locationProvider);
         if(lastKnownLocation != null) {
             Log.d(TAG, "Last Known: " + locationToString(lastKnownLocation));
-
-            updateMapPosition(lastKnownLocation);
-
-            mYouMarker = new MarkerOptions()
-                    .position(new LatLng(lastKnownLocation.getLatitude(), lastKnownLocation.getLongitude()))
-                    .title("You");
-            mGoogleMap.addMarker(mYouMarker);
+            updateMapPositionAndMarker(lastKnownLocation);
         }
     }
 
@@ -102,22 +100,9 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     protected void onResume () {
         super.onResume();
 
-        // Start updating the location
-        mIsLocationProviderEnabled = mLocationManager.isProviderEnabled(locationProvider);
-        if(!mIsGpsUpdaterEnabled && mIsLocationProviderEnabled) {
-
-            mLocationManager.requestLocationUpdates(
-                    locationProvider, // Find location by WiFi or Cell Network
-                    0, // minimum time interval between notifications, milliseconds
-                    5, // minimum distance in meters between notifications
-                    this);
-
-            Log.d(TAG, "Gps enabled");
-            mIsGpsUpdaterEnabled = true;
-        }
-
-        if(!mIsLocationProviderEnabled) {
-            showActivateGpsAlert();
+        // if TRUE -> Start looking for the GPS Location
+        if(mStartGpsUpdaterOnResume) {
+            registerGpsLocationUpdater();
         }
     }
 
@@ -129,11 +114,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
          */
 
         // Don't look for new locations while app is in the background
-        if(mIsGpsUpdaterEnabled) {
-            Log.d(TAG, "Gps disabled");
-            mLocationManager.removeUpdates(this);
-            mIsGpsUpdaterEnabled = false;
-        }
+        unregisterGpsLocationUpdater();
     }
 
     @Override
@@ -141,7 +122,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         super.onStart();
 
         if(mServerConnection == null) {
-            if(mConnectToServerTask == null) {
+            if(mConnectToServerTask == null) { // If there isn't already a connect task running.
                 mConnectToServerTask = new ConnectToServerTask();
                 mConnectToServerTask.execute((Void) null);
             }
@@ -168,8 +149,42 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         }
     }
 
+    public void registerGpsLocationUpdater() {
+        mIsLocationProviderEnabled = mLocationManager.isProviderEnabled(locationProvider);
+        if (!mIsGpsUpdaterSetup && mIsLocationProviderEnabled) {
 
+            mLocationManager.requestLocationUpdates(
+                    locationProvider, // Find location by WiFi or Cell Network
+                    SETTING__GPS_MINIMAL_INTERVAL, // minimum time interval between notifications, milliseconds
+                    SETTING__GPS_MINIMAL_DISTANCE, // minimum distance in meters between notifications
+                    this);
 
+            Log.d(TAG, "Gps enabled");
+            mIsGpsUpdaterSetup = true;
+        }
+
+        if (!mIsLocationProviderEnabled) {
+            showActivateGpsAlert();
+        }
+    }
+
+    public void unregisterGpsLocationUpdater() {
+        if(mIsGpsUpdaterSetup) {
+            Log.d(TAG, "Gps disabled");
+            mLocationManager.removeUpdates(this);
+            mIsGpsUpdaterSetup = false;
+        }
+    }
+
+    public void startGpsUpdater() {
+        mStartGpsUpdaterOnResume = true;
+        registerGpsLocationUpdater();
+    }
+
+    public void completelyStopUpdatingGpsLocation() {
+        mStartGpsUpdaterOnResume = false;
+        unregisterGpsLocationUpdater();
+    }
 
     private boolean isBetterLocation(Location location, Location currentBestLocation) {
 
@@ -181,17 +196,43 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     public void onLocationChanged(Location location) {
         if(location != null) {
             Log.d("Lobby", "New Location " + locationToString(location));
-            //mLocationManager.removeUpdates(this);
 
             if (isBetterLocation(location, mCurrentBestLocation)) {
 
                 mCurrentBestLocation = location;
-                if(mServerConnection != null)
-                    mServerConnection.sendLocationUpdate(location);
-                updateMapPosition(location);
+
+                if(mServerConnection != null) {
+                    if (mRequestUpdatePlayersTask == null) {
+                        mRequestUpdatePlayersTask = new RequestUpdatePlayersTask();
+                        mRequestUpdatePlayersTask.execute(location);
+                    }
+                }
+
+                updateMapPositionAndMarker(location);
 
                 Log.d(TAG, "Updating location");
             }
+        }
+    }
+
+    protected void updatePlayerMarkers(List<PlayerData> players) {
+
+        // Remove ALL player markers
+        if(mPlayerMarkers.size() > 0) {
+            for(Marker marker : mPlayerMarkers) {
+                marker.remove();
+            }
+        }
+
+        mPlayerMarkers.clear();
+
+        // Re-add all players
+        for(PlayerData player : players) {
+            Marker playerMarker = mGoogleMap.addMarker(new MarkerOptions()
+                    .position(new LatLng(player.location.getLatitude(), player.location.getLongitude()))
+                    .title(player.username));
+
+            mPlayerMarkers.add(playerMarker);
         }
     }
 
@@ -211,7 +252,14 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     }
 
 
-    private void updateMapPosition(Location location) {
+    private void updateMapPositionAndMarker(Location location) {
+        if(mYouMarker != null)
+            mYouMarker.remove();
+        MarkerOptions markerOptions = new MarkerOptions()
+                .position(new LatLng(location.getLatitude(), location.getLongitude()))
+                .title("You");
+        mYouMarker = mGoogleMap.addMarker(markerOptions);
+
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         CameraPosition cameraPosition = new CameraPosition.Builder()
                 .target(latLng)
@@ -236,10 +284,6 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         }
     }
 
-
-    /**
-     * Represents an asynchronous login/registration task used to authenticate the user.
-     */
     class ConnectToServerTask extends AsyncTask<Void, Void, Void> {
 
         @Override
@@ -249,11 +293,13 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
                 Log.d(TAG, "Trying to connect to server");
                 mServerConnection = new ServerConnection(mLoginSession);
                 Log.d(TAG, "Connected to server!!!!!");
+
+                startGpsUpdater();
+
             } catch (IOException e) {
                 //e.printStackTrace();
                 Log.e(TAG, "Failed to connect to server!!!!!");
             }
-
             return null;
         }
 
@@ -263,6 +309,31 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         }
 
     }
+
+    class RequestUpdatePlayersTask extends AsyncTask<Location, Void, Void> {
+
+        @Override
+        protected Void doInBackground(Location... location) {
+
+            try {
+                mServerConnection.sendLocationUpdate(location[0]);
+                List<PlayerData> players = mServerConnection.requestNearbyPlayers();
+                updatePlayerMarkers(players);
+
+            } catch (IOException e) {
+                //e.printStackTrace();
+                Log.e(TAG, "Failed to update player info!!!");
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void v) {
+            mRequestUpdatePlayersTask = null;
+        }
+    }
+
+
 
     private void showActivateGpsAlert() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
