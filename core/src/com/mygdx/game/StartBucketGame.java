@@ -8,13 +8,13 @@ import com.badlogic.gdx.graphics.OrthographicCamera;
 /**
  * Created by callan on 02/11/14.
  */
-public class MainMenuScreen implements Screen
+public class StartBucketGame implements Screen
 {
-    final MyGdxGame game;
+    final GameLauncher game;
 
     OrthographicCamera camera;
 
-    public MainMenuScreen(final MyGdxGame gam) {
+    public StartBucketGame(final GameLauncher gam) {
         game = gam;
 
         camera = new OrthographicCamera();
@@ -36,7 +36,7 @@ public class MainMenuScreen implements Screen
         game.batch.end();
 
         if (Gdx.input.isTouched()) {
-            game.setScreen(new GameScreen(game));
+            game.setScreen(new BucketGame(game));
             dispose();
         }
     }

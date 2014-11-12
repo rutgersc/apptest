@@ -3,7 +3,7 @@ package com.mygdx.game.client;
 import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.backends.gwt.GwtApplication;
 import com.badlogic.gdx.backends.gwt.GwtApplicationConfiguration;
-import com.mygdx.game.MyGdxGame;
+import com.mygdx.game.GameLauncher;
 
 public class HtmlLauncher extends GwtApplication {
 
@@ -15,6 +15,6 @@ public class HtmlLauncher extends GwtApplication {
     @Override
     public ApplicationListener getApplicationListener () {
         HtmlImplementation implementation = new HtmlImplementation();
-        return new MyGdxGame(implementation);
+        return new GameLauncher(implementation);
     }
 }

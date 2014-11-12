@@ -17,9 +17,9 @@ import java.util.Iterator;
 /**
  * Created by callan on 02/11/14.
  */
-public class GameScreen implements Screen
+public class BucketGame implements Screen
 {
-    final MyGdxGame game;
+    final GameLauncher game;
 
     Texture dropImage;
     Texture bucketImage;
@@ -29,7 +29,7 @@ public class GameScreen implements Screen
     long lastDropTime;
     int dropsGathered;
 
-    public GameScreen(final MyGdxGame gam) {
+    public BucketGame(final GameLauncher gam) {
         this.game = gam;
 
         // load the images for the droplet and the bucket, 64x64 pixels each
