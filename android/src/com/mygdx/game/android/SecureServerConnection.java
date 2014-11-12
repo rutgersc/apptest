@@ -90,7 +90,9 @@ public class SecureServerConnection {
     }
 
 
-    public boolean login(String userName, String password) throws IOException {
+    public String login(String userName, String password) throws IOException {
+
+        String uuidFromServer = null;
 
         out.println("login");
         out.println(userName);
@@ -103,13 +105,11 @@ public class SecureServerConnection {
 
         String response = in.readLine();
 
-        boolean loginSuccessful = false;
         if (response != null) {
-            System.out.println(response);
-            Log.d(TAG, "Response: " + response);
+            Log.d(TAG, "Login Response: " + response);
 
-            if (response.equals("Success")) {
-                loginSuccessful = true;
+            if (!response.equals("Fail")) {
+                uuidFromServer = response;
             }
         }
 
@@ -117,11 +117,13 @@ public class SecureServerConnection {
         in.close();
         socket.close();
 
-        return loginSuccessful;
+        return uuidFromServer; // Returns null on failed login
     }
 
 
-    public String guestLogin() throws IOException {
+    public LoginSession guestLogin() throws IOException {
+
+        LoginSession loginSession = null;
 
         out.println("guestLogin");
         out.flush();
@@ -130,17 +132,18 @@ public class SecureServerConnection {
             Log.e(TAG, "SSLSocketClient: java.io.PrintWriter error");
         }
 
-        String response = in.readLine();
+        String response_GuestName = in.readLine();
+        String response_uuid = in.readLine();
 
-        if (response == null) {
-            response = "";
+        if (response_GuestName != null && response_uuid != null) {
+            loginSession = new LoginSession(response_GuestName, response_uuid);
         }
 
         out.close();
         in.close();
         socket.close();
 
-        return response;
+        return loginSession; // Returns null on failed login
     }
 
 
