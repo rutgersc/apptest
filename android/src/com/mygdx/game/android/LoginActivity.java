@@ -34,25 +34,16 @@ public class LoginActivity extends Activity {
 
     Switch mGuestLoginSwitch;
 
-    boolean TEMP_DEBUG_ON = true;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
 
-
-
         ImageButton mLoginButton = (ImageButton) findViewById(R.id.buttonLogin);
         mLoginButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                if(TEMP_DEBUG_ON) {
-                    openLobby();
-                }else {
-                    onLogin();
-                }
+                doLogin();
             }
         });
 
@@ -64,7 +55,7 @@ public class LoginActivity extends Activity {
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
 
                 if (id == R.id.login || id == EditorInfo.IME_NULL) {
-                    onLogin();
+                    doLogin();
                     return true;
                 }
                 return false;
@@ -95,19 +86,32 @@ public class LoginActivity extends Activity {
             }
         });
 
-        if(TEMP_DEBUG_ON) {
-            mDebugButton_skipLogin.setVisibility(View.INVISIBLE);
-        }
+        Button mDebugButton_testLogin = (Button)findViewById(R.id.debugButton_testLogin);
+        mDebugButton_testLogin.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                UserLoginTask userLoginTask = new UserLoginTask("test",  "testSessionId");
+                mAuthTask = userLoginTask;
+                userLoginTask.execute((Void) null);
+            }
+        });
     }
 
     public void openLobby() {
         startActivity(new Intent(LoginActivity.this, LobbyActivity.class));
+        //TODO: Remove calls to this method. Only used for debug/testing now
+    }
+    public void openLobby(String username, String sessionId) {
+        Intent intent = new Intent(LoginActivity.this, LobbyActivity.class);
+        intent.putExtra("username", username);
+        intent.putExtra("sessionId", sessionId);
+        startActivity(intent);
     }
 
     /**
      * Will log in as GUEST or as USER
      */
-    public void onLogin() {
+    public void doLogin() {
         if(mGuestLoginSwitch.isChecked()) {
             attemptGuestLogin();
         } else {
@@ -173,7 +177,7 @@ public class LoginActivity extends Activity {
     /**
      * Represents an asynchronous login/registration task used to authenticate the user.
      */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
+    public class UserLoginTask extends AsyncTask<Void, Void, String> {
 
         private final String mUsername;
         private final String mPassword;
@@ -184,7 +188,7 @@ public class LoginActivity extends Activity {
         }
 
         @Override
-        protected Boolean doInBackground(Void... params) {
+        protected String doInBackground(Void... params) {
 
             try {
                 SecureServerConnection conn = new SecureServerConnection(LoginActivity.this);
@@ -192,18 +196,18 @@ public class LoginActivity extends Activity {
 
             } catch (IOException e) {
                 e.printStackTrace();
-                return false;
+                return null;
             }
         }
 
         @Override
-        protected void onPostExecute(final Boolean success) {
+        protected void onPostExecute(final String sessionUUID) {
             mAuthTask = null;
             //TODO: showProgress(false);
 
-            if (success) {
+            if (sessionUUID != null) {
                 Toast.makeText(getApplicationContext(), "Logged in as: " + mUsername, Toast.LENGTH_LONG).show();
-                openLobby();
+                openLobby(mUsername, sessionUUID);
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
@@ -221,12 +225,12 @@ public class LoginActivity extends Activity {
     /**
      * Represents an asynchronous login/registration task used to authenticate the guest.
      */
-    public class GuestLoginTask extends AsyncTask<Void, Void, String> {
+    public class GuestLoginTask extends AsyncTask<Void, Void, LoginSession> {
 
         GuestLoginTask() {}
 
         @Override
-        protected String doInBackground(Void... params) {
+        protected LoginSession doInBackground(Void... params) {
 
             // Will return the new name of the guest (ex. guest1234) if successful.
             try {
@@ -235,21 +239,18 @@ public class LoginActivity extends Activity {
 
             } catch (IOException e) {
                 e.printStackTrace();
-                return "";
+                return null;
             }
         }
 
         @Override
-        protected void onPostExecute(final String guestName) {
+        protected void onPostExecute(final LoginSession guestLoginSession) {
             mAuthTask = null;
             //TODO: showProgress(false);
 
-            Log.d(LoginActivity.this.TAG, "Guest logged in as: " + guestName);
-
-            if (!guestName.equals("")) { // if logging in was successful
-
-                Toast.makeText(getApplicationContext(), "Logged in as: " + guestName, Toast.LENGTH_LONG).show();
-                openLobby();
+            if (guestLoginSession != null) {
+                Toast.makeText(getApplicationContext(), "Logged in as: " + guestLoginSession.getUsername(), Toast.LENGTH_LONG).show();
+                openLobby(guestLoginSession.getUsername(), guestLoginSession.getSessionId());
             } else {
                 mPasswordView.setError(getString(R.string.error_incorrect_password));
                 mPasswordView.requestFocus();
