@@ -337,7 +337,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        mConnectedToServertextView.setTextColor(Color.GREEN);
+                        mConnectedToServertextView.setTextColor(Color.RED);
                         mConnectedToServertextView.setText("Failed connecting");
                         Log.e(TAG, "Failed connecting to server!!!!!");
                     }

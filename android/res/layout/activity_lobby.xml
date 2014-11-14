@@ -17,6 +17,14 @@
         android:background="@android:color/transparent"
         android:layout_centerHorizontal="true" />
 
+    <fragment
+        android:id="@+id/location_map"
+        class="com.google.android.gms.maps.MapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="fill_parent"
+        android:layout_below="@+id/buttonPlayGame"
+        android:layout_above="@+id/loginInfoLayout" />
+
     <RelativeLayout
         android:id="@+id/playerInfoLayout"
         android:layout_width="wrap_content"
@@ -27,27 +35,42 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
-            android:text="0 Players nearby "
-            android:id="@+id/textView"
-             />
+            android:text="0"
+            android:id="@+id/playerCountTextView"
+            android:textColor="#ff101316" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
-            android:text="- 0 searching"
-            android:id="@+id/textView2"
-            android:layout_toRightOf="@+id/textView"
-            android:layout_alignBottom="@+id/textView" />
-    </RelativeLayout>
+            android:text="Players - "
+            android:id="@+id/textView4"
+            android:layout_toRightOf="@+id/playerCountTextView"
+            android:layout_alignBottom="@+id/playerCountTextView"
+            android:layout_marginLeft="5dp"
+            android:textColor="#ff101316" />
 
-    <fragment
-        android:id="@+id/location_map"
-        class="com.google.android.gms.maps.MapFragment"
-        android:layout_width="match_parent"
-        android:layout_height="fill_parent"
-        android:layout_below="@+id/playerInfoLayout"
-        android:layout_above="@+id/loginInfoLayout" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
+            android:text="0"
+            android:id="@+id/playersSearchingTextView"
+            android:layout_toRightOf="@+id/textView4"
+            android:layout_alignBottom="@+id/textView4"
+            android:textColor="#ff101316" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@android:style/TextAppearance.DeviceDefault.Large"
+            android:text="searching"
+            android:id="@+id/textView5"
+            android:layout_toRightOf="@+id/playersSearchingTextView"
+            android:layout_alignBottom="@+id/playersSearchingTextView"
+            android:layout_marginLeft="5dp"
+            android:textColor="#ff101316" />
+    </RelativeLayout>
 
     <RelativeLayout
         android:id="@+id/loginInfoLayout"
