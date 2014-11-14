@@ -53,8 +53,9 @@
         android:id="@+id/loginInfoLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_alignParentBottom="true">
+        android:layout_alignParentBottom="false"
+        android:layout_above="@+id/relativeLayout"
+        android:layout_centerHorizontal="true">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -66,9 +67,33 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?android:attr/textAppearanceMedium"
-            android:text="Guest412334"
-            android:id="@+id/textView4"
+            android:text="-----------"
+            android:id="@+id/usernameTextView"
             android:layout_toRightOf="@+id/textView3"
+            android:layout_marginLeft="4dp" />
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="Connecting..."
+            android:id="@+id/connectedToServertextView" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:text="| debug"
+            android:id="@+id/debugTextView"
+            android:layout_toRightOf="@+id/connectedToServertextView"
             android:layout_marginLeft="4dp" />
     </RelativeLayout>
 

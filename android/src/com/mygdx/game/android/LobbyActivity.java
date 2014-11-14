@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -13,6 +14,7 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -51,6 +53,8 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     ServerConnection mServerConnection;
     LoginSession mLoginSession;
 
+    TextView mUsernameTextView;
+    TextView mConnectedToServertextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +86,14 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
                 startActivity(intent);
             }
         });
+
+        mUsernameTextView = (TextView) findViewById(R.id.usernameTextView);
+        if(mLoginSession != null) {
+            mUsernameTextView.setText(mLoginSession.getUsername());
+        }
+
+        mConnectedToServertextView = (TextView) findViewById(R.id.connectedToServertextView);
+        mConnectedToServertextView.setTextColor(Color.RED);
 
         // Set up Google Maps
         //
@@ -181,6 +193,10 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         registerGpsLocationUpdater();
     }
 
+    /**
+     * Si that when the app comes back to the foreground (onResume) the GPS doesn't automatically
+     * register again.
+     */
     public void completelyStopUpdatingGpsLocation() {
         mStartGpsUpdaterOnResume = false;
         unregisterGpsLocationUpdater();
@@ -188,7 +204,18 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
     private boolean isBetterLocation(Location location, Location currentBestLocation) {
 
-        //TODO: Add logic
+        if(currentBestLocation == null) {
+            return true;
+        }
+
+        // if location is the same
+        if(location.getLatitude() == currentBestLocation.getLatitude() &&
+           location.getLongitude() == currentBestLocation.getLatitude()) {
+            return false;
+        }
+
+        //TODO: Add logic (check for accuracy etc)
+
         return true;
     }
 
@@ -202,7 +229,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
                 mCurrentBestLocation = location;
 
                 if(mServerConnection != null) {
-                    if (mRequestUpdatePlayersTask == null) {
+                    if (mRequestUpdatePlayersTask == null) { // Only update players if the last request is done.
                         mRequestUpdatePlayersTask = new RequestUpdatePlayersTask();
                         mRequestUpdatePlayersTask.execute(location);
                     }
@@ -290,15 +317,39 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         protected Void doInBackground(Void... voids) {
 
             try {
-                Log.d(TAG, "Trying to connect to server");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mConnectedToServertextView.setTextColor(Color.CYAN);
+                        mConnectedToServertextView.setText("Connecting...");
+                        Log.d(TAG, "Trying to connect to server");
+                    }
+                });
                 mServerConnection = new ServerConnection(mLoginSession);
-                Log.d(TAG, "Connected to server!!!!!");
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mConnectedToServertextView.setTextColor(Color.GREEN);
+                        mConnectedToServertextView.setText("Connected");
+                        Log.d(TAG, "Connected to server!!!!!");
+                    }
+                });
 
                 startGpsUpdater();
 
             } catch (IOException e) {
-                //e.printStackTrace();
-                Log.e(TAG, "Failed to connect to server!!!!!");
+                e.printStackTrace();
+
+                runOnUiThread(new Runnable() { @Override
+                    public void run() {
+                        mConnectedToServertextView.setText(Color.GREEN);
+                        mConnectedToServertextView.setText("Failed connecting");
+                        Log.e(TAG, "Failed connecting to server!!!!!");
+                    }
+                });
+
+                completelyStopUpdatingGpsLocation();
             }
             return null;
         }
@@ -317,8 +368,14 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
             try {
                 mServerConnection.sendLocationUpdate(location[0]);
-                List<PlayerData> players = mServerConnection.requestNearbyPlayers();
-                updatePlayerMarkers(players);
+                final List<PlayerData> players = mServerConnection.requestNearbyPlayers();
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                     public void run() {
+                        updatePlayerMarkers(players);
+                    }
+                });
 
             } catch (IOException e) {
                 //e.printStackTrace();
