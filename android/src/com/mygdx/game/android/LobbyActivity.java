@@ -97,13 +97,21 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
         // Set up Google Maps
         //
-        setupMapIfNeeded();
         mPlayerMarkers = new ArrayList<Marker>();
 
-        Location lastKnownLocation = mLocationManager.getLastKnownLocation(locationProvider);
-        if(lastKnownLocation != null) {
-            Log.d(TAG, "Last Known: " + locationToString(lastKnownLocation));
-            updateMapPositionAndMarker(lastKnownLocation);
+        if (mGoogleMap == null) {
+            mGoogleMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_map)).getMap();
+            // Check if we were successful in obtaining the map.
+            if (mGoogleMap != null) {
+                // The Map is verified. It is now safe to manipulate the map.
+                //TODO:mGoogleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+
+                Location lastKnownLocation = mLocationManager.getLastKnownLocation(locationProvider);
+                if(lastKnownLocation != null) {
+                    Log.d(TAG, "Last Known: " + locationToString(lastKnownLocation));
+                    updateMapPositionAndMarker(lastKnownLocation);
+                }
+            }
         }
     }
 
@@ -194,7 +202,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     }
 
     /**
-     * Si that when the app comes back to the foreground (onResume) the GPS doesn't automatically
+     * So that when the app comes back to the foreground (onResume) the GPS doesn't automatically
      * register again.
      */
     public void completelyStopUpdatingGpsLocation() {
@@ -232,12 +240,11 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
                     if (mRequestUpdatePlayersTask == null) { // Only update players if the last request is done.
                         mRequestUpdatePlayersTask = new RequestUpdatePlayersTask();
                         mRequestUpdatePlayersTask.execute(location);
+                        Log.d(TAG, "Updating players locations");
                     }
                 }
 
                 updateMapPositionAndMarker(location);
-
-                Log.d(TAG, "Updating location");
             }
         }
     }
@@ -297,20 +304,6 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         mGoogleMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition));
     }
 
-    private void setupMapIfNeeded() {
-        // Do a null check to confirm that we have not already instantiated the map.
-        if (mGoogleMap == null) {
-            mGoogleMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.location_map)).getMap();
-            // Check if we were successful in obtaining the map.
-            if (mGoogleMap != null) {
-                // The Map is verified. It is now safe to manipulate the map.
-                //TODO:mGoogleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
-
-
-            }
-        }
-    }
-
     class ConnectToServerTask extends AsyncTask<Void, Void, Void> {
 
         @Override
@@ -341,9 +334,10 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
             } catch (IOException e) {
                 e.printStackTrace();
 
-                runOnUiThread(new Runnable() { @Override
+                runOnUiThread(new Runnable() {
+                    @Override
                     public void run() {
-                        mConnectedToServertextView.setText(Color.GREEN);
+                        mConnectedToServertextView.setTextColor(Color.GREEN);
                         mConnectedToServertextView.setText("Failed connecting");
                         Log.e(TAG, "Failed connecting to server!!!!!");
                     }
@@ -367,7 +361,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         protected Void doInBackground(Location... location) {
 
             try {
-                mServerConnection.sendLocationUpdate(location[0]);
+               // mServerConnection.sendLocationUpdate(location[0]);
                 final List<PlayerData> players = mServerConnection.requestNearbyPlayers();
 
                 runOnUiThread(new Runnable() {
