@@ -10,7 +10,7 @@
         android:layout_width="fill_parent"
         android:layout_height="150dp"
         android:text="Play"
-        android:id="@+id/buttonPlayGame"
+        android:id="@+id/playGameButton"
         android:alpha="255"
         android:textSize="40dp"
         android:padding="40dp"
@@ -22,14 +22,14 @@
         class="com.google.android.gms.maps.MapFragment"
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
-        android:layout_below="@+id/buttonPlayGame"
+        android:layout_below="@+id/playGameButton"
         android:layout_above="@+id/loginInfoLayout" />
 
     <RelativeLayout
         android:id="@+id/playerInfoLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/buttonPlayGame"
+        android:layout_below="@+id/playGameButton"
         android:layout_centerHorizontal="true">
         <TextView
             android:layout_width="wrap_content"

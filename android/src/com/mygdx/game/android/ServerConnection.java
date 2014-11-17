@@ -47,6 +47,9 @@ public class ServerConnection {
         outputStreamRaw = new OutputStreamWriter(socket.getOutputStream());
         in = new BufferedReader(inputStreamRaw);
         out = new PrintWriter(outputStreamRaw);
+
+        out.println(mLoginSession.getSessionId());
+        out.flush();
     }
 
     public void disconnect() throws IOException {
@@ -58,8 +61,6 @@ public class ServerConnection {
     public void sendLocationUpdate(Location location)  {
 
         out.println("updateLocation");
-        out.println(mLoginSession.getSessionId());
-
         out.println(location.getLatitude());
         out.println(location.getLongitude());
         out.flush();
@@ -72,12 +73,11 @@ public class ServerConnection {
     public List<PlayerData> requestNearbyPlayers() throws IOException {
 
         out.println("requestNearbyPlayers");
-        out.println(mLoginSession.getSessionId());
         out.flush();
 
         String nearbyPlayersString = in.readLine();
 
-        List<PlayerData> playerList = new ArrayList<PlayerData>();
+                List<PlayerData> playerList = new ArrayList<PlayerData>();
 
         if(!nearbyPlayersString.equals("Empty")) {
             String[] players = nearbyPlayersString.split(";");
@@ -97,12 +97,16 @@ public class ServerConnection {
         return playerList;
     }
 
-    public void sendAppIsInBackground() {
-        //TODO: Optional??????
+    public void sendSearchingForGame() {
+        //TODO: User clicked play button, send search request to server
+
+        out.println("searchGame");
+        out.flush();
     }
 
-    public void sendSarchingForGame() {
-        //TODO: User clicked play button, send search request to server
+    public void stopSearchingForGame() {
+        out.println("stopSearchGame");
+        out.flush();
     }
 }
 

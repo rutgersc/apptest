@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -52,9 +53,13 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     RequestUpdatePlayersTask mRequestUpdatePlayersTask = null;
     ServerConnection mServerConnection;
     LoginSession mLoginSession;
+    SearchGameTask mSearchGameTask = null;
 
+    Button mPlayGameButton;
     TextView mUsernameTextView;
     TextView mConnectedToServertextView;
+    TextView mPlayerCountTextView, mPlayersSearchingTextView;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,12 +83,17 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
         // Set up interface
         //
-        Button mLoginButton = (Button) findViewById(R.id.buttonPlayGame);
-        mLoginButton.setOnClickListener(new View.OnClickListener() {
+        mPlayGameButton = (Button) findViewById(R.id.playGameButton);
+        mPlayGameButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(LobbyActivity.this, AndroidLauncher.class);
-                startActivity(intent);
+                //Intent intent = new Intent(LobbyActivity.this, AndroidLauncher.class);
+                //startActivity(intent);
+
+                if(mSearchGameTask == null) {
+                    mSearchGameTask = new SearchGameTask();
+                    mSearchGameTask.execute((Void) null);
+                }
             }
         });
 
@@ -91,6 +101,10 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         if(mLoginSession != null) {
             mUsernameTextView.setText(mLoginSession.getUsername());
         }
+
+        mPlayerCountTextView = (TextView) findViewById(R.id.playerCountTextView);
+
+        mPlayersSearchingTextView = (TextView)findViewById(R.id.playersSearchingTextView);
 
         mConnectedToServertextView = (TextView) findViewById(R.id.connectedToServertextView);
         mConnectedToServertextView.setTextColor(Color.RED);
@@ -352,7 +366,6 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         protected void onPostExecute(Void v) {
             mConnectToServerTask = null;
         }
-
     }
 
     class RequestUpdatePlayersTask extends AsyncTask<Location, Void, Void> {
@@ -361,13 +374,21 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         protected Void doInBackground(Location... location) {
 
             try {
-               // mServerConnection.sendLocationUpdate(location[0]);
+                mServerConnection.sendLocationUpdate(location[0]);
                 final List<PlayerData> players = mServerConnection.requestNearbyPlayers();
 
                 runOnUiThread(new Runnable() {
                     @Override
                      public void run() {
                         updatePlayerMarkers(players);
+                        mPlayerCountTextView.setText(String.valueOf(players.size()));
+
+                        // (De)activate player button
+                        if(players.size() > 0) {
+                            mPlayGameButton.setEnabled(true);
+                        } else {
+                            mPlayGameButton.setEnabled(false);
+                        }
                     }
                 });
 
@@ -381,6 +402,21 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         @Override
         protected void onPostExecute(Void v) {
             mRequestUpdatePlayersTask = null;
+        }
+    }
+
+    class SearchGameTask extends AsyncTask<Void, Void, Void> {
+        @Override
+        protected Void doInBackground(Void... voids) {
+            //TODO: Activate UI Spinner
+            mServerConnection.sendSearchingForGame();
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void v) {
+            //TODO: Stop spinner
+            mSearchGameTask = null;
         }
     }
 

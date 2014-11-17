@@ -1,33 +1,27 @@
 package com.mygdx.game.android;
 
 import android.content.Context;
-import android.net.SSLCertificateSocketFactory;
+import android.content.SharedPreferences;
 import android.util.Log;
 
 import java.io.BufferedReader;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManagerFactory;
 
 public class SecureServerConnection {
@@ -36,6 +30,7 @@ public class SecureServerConnection {
     public static final int SSL_PORT = 8882;
 
     private Context context;
+    private SharedPreferences mPreferences;
 
     private SSLSocket socket;
     private PrintWriter out;
@@ -44,6 +39,7 @@ public class SecureServerConnection {
     SecureServerConnection(Context context) throws IOException {
 
         this.context = context;
+        this.mPreferences = context.getSharedPreferences("preferences", 0);
 
         try {
             Log.d(TAG, "SSL connecting to: " + ServerConnection.HOSTNAME + ":" + SecureServerConnection.SSL_PORT);
@@ -94,9 +90,16 @@ public class SecureServerConnection {
 
         String uuidFromServer = null;
 
+        String existingUuid = "none";
+        if(userName.equals(mPreferences.getString("uuid-username", ""))) {
+            // only use existing UUID if the usernames are equal
+            existingUuid = mPreferences.getString("uuid", "none");
+        }
+
         out.println("login");
         out.println(userName);
         out.println(password);
+        out.println(existingUuid); // send existing uuid if one exists.
         out.flush();
 
         if (out.checkError()) {
@@ -116,6 +119,12 @@ public class SecureServerConnection {
         out.close();
         in.close();
         socket.close();
+
+        // Save UUID in mPreferences
+        if(uuidFromServer != null) {
+            mPreferences.edit().putString("uuid", uuidFromServer)
+                               .putString("uuid-username", userName).apply();
+        }
 
         return uuidFromServer; // Returns null on failed login
     }
