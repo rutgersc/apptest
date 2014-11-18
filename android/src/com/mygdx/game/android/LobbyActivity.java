@@ -1,7 +1,5 @@
 package com.mygdx.game.android;
 
-import android.animation.ArgbEvaluator;
-import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -16,11 +14,6 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
-import android.view.ViewPropertyAnimator;
-import android.view.ViewTreeObserver;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.NumberPicker;
 import android.widget.RelativeLayout;
@@ -69,7 +62,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     NumberPicker mGamePicker;
     String[] mGamePickerValues = new String[3];
     TextView mUsernameTextView;
-    TextView mConnectedToServertextView;
+    TextView mConnectedToServerTextView;
     TextView mPlayerCountTextView, mPlayersSearchingTextView;
 
     RelativeLayout mProgressBarLayout;
@@ -144,8 +137,8 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
         mPlayersSearchingTextView = (TextView)findViewById(R.id.playersSearchingTextView);
 
-        mConnectedToServertextView = (TextView) findViewById(R.id.connectedToServertextView);
-        mConnectedToServertextView.setTextColor(Color.RED);
+        mConnectedToServerTextView = (TextView) findViewById(R.id.connectedToServertextView);
+        mConnectedToServerTextView.setTextColor(Color.RED);
 
         // Set up Google Maps
         //
@@ -362,8 +355,8 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
         @Override
         protected void onPreExecute () {
-            mConnectedToServertextView.setTextColor(Color.CYAN);
-            mConnectedToServertextView.setText("Connecting...");
+            mConnectedToServerTextView.setTextColor(Color.CYAN);
+            mConnectedToServerTextView.setText("Connecting...");
             Log.d(TAG, "Trying to connect to server");
 
             mPlayGameButton.setEnabled(false);
@@ -389,14 +382,14 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         @Override
         protected void onPostExecute(Void v) {
             if(mServerConnection == null || !mServerConnection.isConnected()) {
-                mConnectedToServertextView.setTextColor(Color.RED);
-                mConnectedToServertextView.setText("Failed connecting");
+                mConnectedToServerTextView.setTextColor(Color.RED);
+                mConnectedToServerTextView.setText("Failed connecting");
                 Log.e(TAG, "Failed connecting to server!!!!!");
                 completelyStopUpdatingGpsLocation();
             }
             else {
-                mConnectedToServertextView.setTextColor(Color.GREEN);
-                mConnectedToServertextView.setText("Connected");
+                mConnectedToServerTextView.setTextColor(Color.GREEN);
+                mConnectedToServerTextView.setText("Connected");
                 Log.d(TAG, "Connected to server!!!!!");
                 startGpsUpdater();
                 mPlayGameButton.setEnabled(true);
