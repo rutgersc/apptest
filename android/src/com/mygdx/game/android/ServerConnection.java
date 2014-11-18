@@ -33,6 +33,8 @@ public class ServerConnection {
     BufferedReader in;
     PrintWriter out;
 
+    protected boolean isConnected = false;
+
     ServerConnection(LoginSession session) throws IOException {
         mLoginSession = session;
 
@@ -50,12 +52,18 @@ public class ServerConnection {
 
         out.println(mLoginSession.getSessionId());
         out.flush();
+        isConnected = true;
     }
 
     public void disconnect() throws IOException {
         out.close();
         in.close();
         socket.close();
+        isConnected = false;
+    }
+
+    public boolean isConnected() {
+        return isConnected;
     }
 
     public void sendLocationUpdate(Location location)  {
@@ -97,7 +105,7 @@ public class ServerConnection {
         return playerList;
     }
 
-    public void sendSearchingForGame() {
+    public void sendSearchingForGame(String gameType) {
         //TODO: User clicked play button, send search request to server
 
         out.println("searchGame");

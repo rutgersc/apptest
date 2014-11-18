@@ -6,31 +6,45 @@
     android:paddingBottom="@dimen/activity_vertical_margin"
     tools:context="com.mygdx.game.android.LobbyActivity">
 
-    <Button
-        android:layout_width="fill_parent"
-        android:layout_height="150dp"
-        android:text="Play"
-        android:id="@+id/playGameButton"
-        android:alpha="255"
-        android:textSize="40dp"
-        android:padding="40dp"
-        android:background="@android:color/transparent"
-        android:layout_centerHorizontal="true" />
+    <RelativeLayout
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:id="@+id/topLayout">
+
+        <Button
+            android:layout_width="fill_parent"
+            android:layout_height="200dp"
+            android:text="Play"
+            android:id="@+id/playGameButton"
+            android:textSize="40dp"
+            android:padding="40dp"
+            android:layout_toLeftOf="@+id/gamePicker" />
+
+        <NumberPicker
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/gamePicker"
+            android:layout_alignParentRight="true"
+            android:layout_centerVertical="true"
+            android:layout_marginLeft="15dp"
+            android:layout_marginRight="8dp" />
+   </RelativeLayout>
 
     <fragment
         android:id="@+id/location_map"
         class="com.google.android.gms.maps.MapFragment"
         android:layout_width="match_parent"
         android:layout_height="fill_parent"
-        android:layout_below="@+id/playGameButton"
+        android:layout_below="@+id/topLayout"
         android:layout_above="@+id/loginInfoLayout" />
 
     <RelativeLayout
         android:id="@+id/playerInfoLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/playGameButton"
-        android:layout_centerHorizontal="true">
+        android:layout_centerHorizontal="true"
+        android:layout_alignTop="@+id/location_map"
+        android:layout_marginTop="5dp">
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -72,12 +86,14 @@
             android:textColor="#ff101316" />
     </RelativeLayout>
 
+
+
     <RelativeLayout
         android:id="@+id/loginInfoLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="false"
-        android:layout_above="@+id/relativeLayout"
+        android:layout_above="@+id/serverInfoLayout"
         android:layout_centerHorizontal="true">
         <TextView
             android:layout_width="wrap_content"
@@ -97,7 +113,7 @@
     </RelativeLayout>
 
     <RelativeLayout
-        android:id="@+id/relativeLayout"
+        android:id="@+id/serverInfoLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
@@ -118,6 +134,55 @@
             android:id="@+id/debugTextView"
             android:layout_toRightOf="@+id/connectedToServertextView"
             android:layout_marginLeft="4dp" />
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_alignBottom="@+id/topLayout">
+
+        <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/progressBarLayout"
+            android:background="#ff111416"
+            android:translationY="-400dp">
+
+            <RelativeLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true">
+
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_centerHorizontal="true" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textAppearance="?android:attr/textAppearanceMedium"
+                    android:text="Searching Game"
+                    android:id="@+id/textView"
+                    android:layout_below="@+id/progressBar"
+                    android:layout_marginTop="5dp"
+                    android:layout_centerHorizontal="true" />
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cancel"
+                    android:id="@+id/stopSearchingButton"
+                    android:textSize="40dp"
+                    android:layout_below="@+id/textView"
+                    android:layout_centerHorizontal="true" />
+
+            </RelativeLayout>
+
+        </RelativeLayout>
+
     </RelativeLayout>
 
 </RelativeLayout>
