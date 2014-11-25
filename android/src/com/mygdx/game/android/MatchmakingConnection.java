@@ -30,6 +30,8 @@ public class MatchmakingConnection {
     BufferedReader in;
     PrintWriter out;
 
+    String currentGameId = null;
+
     MatchmakingConnection(LoginSession session) throws IOException {
         mLoginSession = session;
     }
@@ -63,7 +65,10 @@ public class MatchmakingConnection {
         }
 
         if(response != null && response.equals("gameFound")) {
-            Log.d(TAG, "GameFound");
+
+            currentGameId = in.readLine();
+            Log.d(TAG, "Game id = " + currentGameId );
+
             return true;
         }
 
@@ -81,17 +86,18 @@ public class MatchmakingConnection {
 
     public boolean sendAcceptGameCommand(boolean accepted) throws IOException {
 
-        if(accepted)
-            out.println("accept");
-        else
-            out.println("decline");
+        if (currentGameId != null) {
 
-        out.flush();
+            out.println("acceptGameChoice");
+            out.println(currentGameId);
+            out.println(accepted);
+            out.flush();
 
-        String confirmation = in.readLine();
+            String confirmation = in.readLine();
 
-        if(confirmation != null && confirmation.equals("startGame")) {
-            return true;
+            if (confirmation != null && confirmation.equals("startGame")) {
+                return true;
+            }
         }
 
         return false;

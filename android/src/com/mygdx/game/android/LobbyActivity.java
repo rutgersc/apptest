@@ -540,8 +540,6 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
                 Toast.makeText(getApplicationContext(), "No game found", Toast.LENGTH_LONG).show();
             }
 
-            showAcceptGameLayout();
-
             mSearchGameTask = null;
         }
     }
@@ -568,10 +566,11 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
             if(confirmation) {
                 //TODO: Start game
-                Log.d(TAG, "Start game? " + confirmation);
+                Toast.makeText(getApplicationContext(), "Start Game!", Toast.LENGTH_LONG).show();
             }
             else {
                 //TODO: Game not accepted by one of the players
+                Toast.makeText(getApplicationContext(), "Other player cancelled game!", Toast.LENGTH_LONG).show();
             }
 
             hideAcceptGameLayout();
