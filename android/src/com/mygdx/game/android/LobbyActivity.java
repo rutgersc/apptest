@@ -14,10 +14,12 @@ import android.support.v4.app.FragmentActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.NumberPicker;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -56,16 +58,19 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     ServerConnection mServerConnection;
     LoginSession mLoginSession;
     SearchGameTask mSearchGameTask = null;
+    MatchmakingConnection mMatchmakingConnection;
+    AcceptGameTask mAcceptGameTask = null;
 
     RelativeLayout topLayout;
-    Button mPlayGameButton, mSopSearchingButton;
+    Button mPlayGameButton, mStopSearchingButton, mAcceptGameButton, mDeclineGameButton;
     NumberPicker mGamePicker;
     String[] mGamePickerValues = new String[3];
     TextView mUsernameTextView;
     TextView mConnectedToServerTextView;
     TextView mPlayerCountTextView, mPlayersSearchingTextView;
 
-    RelativeLayout mProgressBarLayout;
+    RelativeLayout mSearchGameLayout, mAcceptGameLayout;
+    int mAcceptGameLayoutHeight, mSearchGameLayoutHeight;
 
 
     @Override
@@ -74,12 +79,11 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         setContentView(R.layout.activity_lobby);
 
 
-
         // Get the extra login data from LoginActivity.java
         //
         String username = getIntent().getStringExtra("username");
         String sessionId = getIntent().getStringExtra("sessionId");
-        if(username == null || sessionId == null) {
+        if (username == null || sessionId == null) {
             Log.e(TAG, "No username or sessionId found.");
             mLoginSession = new LoginSession("test", "testSessionId"); //TODO: Remove this test line
         } else {
@@ -98,44 +102,71 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         mPlayGameButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-
-                if(mSearchGameTask == null) {
-
+                if (mSearchGameTask == null) {
                     mSearchGameTask = new SearchGameTask();
-                    mSearchGameTask.execute((String)mGamePickerValues[mGamePicker.getValue()]);
+                    mSearchGameTask.execute((String) mGamePickerValues[mGamePicker.getValue()]);
                 }
             }
         });
-        mSopSearchingButton = (Button)findViewById(R.id.stopSearchingButton);
-        mSopSearchingButton.setOnClickListener(new OnClickListener() {
+        mStopSearchingButton = (Button) findViewById(R.id.stopSearchingButton);
+        mStopSearchingButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                //TODO: Stop
-                mProgressBarLayout.animate().y(-400);
-                if(mSearchGameTask != null) {
-                    mSearchGameTask.cancel(true);
+                if (mSearchGameTask != null) {
+                    mSearchGameTask.cancelSearch();
                 }
             }
         });
+        OnClickListener acceptGameOnclickListener = new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                boolean gameAccepted = (view.getId() == mAcceptGameButton.getId());
+
+                if (mAcceptGameTask == null) {
+                    mAcceptGameTask = new AcceptGameTask();
+                    mAcceptGameTask.execute(gameAccepted);
+                }
+            }
+        };
+        mAcceptGameButton = (Button) findViewById(R.id.acceptGameButton);
+        mAcceptGameButton.setOnClickListener(acceptGameOnclickListener);
+        mDeclineGameButton = (Button) findViewById(R.id.declineGameButton);
+        mDeclineGameButton.setOnClickListener(acceptGameOnclickListener);
 
         mGamePicker = (NumberPicker) findViewById(R.id.gamePicker);
         mGamePickerValues[0] = " 5 min";
         mGamePickerValues[1] = "10 min";
         mGamePickerValues[2] = "10+ min";
         mGamePicker.setMinValue(0);
-        mGamePicker.setMaxValue(mGamePickerValues.length -1);
+        mGamePicker.setMaxValue(mGamePickerValues.length - 1);
         mGamePicker.setDisplayedValues(mGamePickerValues);
 
-        mProgressBarLayout = (RelativeLayout)findViewById(R.id.progressBarLayout);
+        mSearchGameLayout = (RelativeLayout) findViewById(R.id.searchGameLayout);
+        mAcceptGameLayout = (RelativeLayout) findViewById(R.id.acceptGameLayout);
+        ViewTreeObserver vto = mAcceptGameLayout.getViewTreeObserver();
+        vto.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                mAcceptGameLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                mAcceptGameLayoutHeight = mAcceptGameLayout.getMeasuredHeight();
+                mSearchGameLayoutHeight =  mSearchGameLayout.getMeasuredHeight();
+
+                mAcceptGameLayout.setY(-mAcceptGameLayoutHeight);
+                mSearchGameLayout.setY(-mSearchGameLayoutHeight);
+            }
+        });
+
+
 
         mUsernameTextView = (TextView) findViewById(R.id.usernameTextView);
-        if(mLoginSession != null) {
+        if (mLoginSession != null) {
             mUsernameTextView.setText(mLoginSession.getUsername());
         }
 
         mPlayerCountTextView = (TextView) findViewById(R.id.playerCountTextView);
 
-        mPlayersSearchingTextView = (TextView)findViewById(R.id.playersSearchingTextView);
+        mPlayersSearchingTextView = (TextView) findViewById(R.id.playersSearchingTextView);
 
         mConnectedToServerTextView = (TextView) findViewById(R.id.connectedToServertextView);
         mConnectedToServerTextView.setTextColor(Color.RED);
@@ -152,7 +183,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
                 //TODO:mGoogleMap.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
                 Location lastKnownLocation = mLocationManager.getLastKnownLocation(locationProvider);
-                if(lastKnownLocation != null) {
+                if (lastKnownLocation != null) {
                     Log.d(TAG, "Last Known: " + locationToString(lastKnownLocation));
                     updateMapPositionAndMarker(lastKnownLocation);
                 }
@@ -160,18 +191,37 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         }
     }
 
+    public void showSearchGameLayout() {
+        // Stop other background tasks
+        completelyStopUpdatingGpsLocation();
+        mSearchGameLayout.animate().y(0);
+    }
+
+    public void hideSearchGameLayout() {
+        mSearchGameLayout.animate().y(-mSearchGameLayoutHeight);
+    }
+
+    public void showAcceptGameLayout() {
+        mAcceptGameLayout.animate().setDuration(1200);
+        mAcceptGameLayout.animate().y(0);
+    }
+
+    public void hideAcceptGameLayout() {
+        mAcceptGameLayout.animate().setDuration(500);
+        mAcceptGameLayout.animate().y(-mAcceptGameLayoutHeight);
+    }
 
     @Override
-    protected void onResume () {
+    protected void onResume() {
         super.onResume();
 
         // if TRUE -> Start looking for the GPS Location
-        if(mStartGpsUpdaterOnResume) {
+        if (mStartGpsUpdaterOnResume) {
             registerGpsLocationUpdater();
         }
 
-        if(mServerConnection == null || !mServerConnection.isConnected()) {
-            if(mConnectToServerTask == null) { // If there isn't already a connect task running.
+        if (mServerConnection == null || !mServerConnection.isConnected()) {
+            if (mConnectToServerTask == null) { // If there isn't already a connect task running.
                 mConnectToServerTask = new ConnectToServerTask();
                 mConnectToServerTask.execute((Void) null);
             }
@@ -179,7 +229,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     }
 
     @Override
-    protected void onPause () {
+    protected void onPause() {
         super.onPause();
         /**
          * If an activity has lost focus but is still visible
@@ -190,14 +240,14 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     }
 
     @Override
-    protected void onStart () {
+    protected void onStart() {
         super.onStart();
 
 
     }
 
     @Override
-    protected void onStop () {
+    protected void onStop() {
         /**
          * If an activity is completely obscured by another activity, it is stopped.
          * It still retains all state and member information, however, it is
@@ -206,13 +256,16 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
          */
         super.onStop();
 
-        if(mServerConnection != null) {
-            try {
+        try {
+            if (mServerConnection != null) {
                 mServerConnection.disconnect();
-            } catch (IOException e) {
-                e.printStackTrace();
             }
-           // mServerConnection = null;
+
+            if(mMatchmakingConnection != null) {
+                mMatchmakingConnection.stopSearchingForGame();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -236,7 +289,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     }
 
     public void unregisterGpsLocationUpdater() {
-        if(mIsGpsUpdaterSetup) {
+        if (mIsGpsUpdaterSetup) {
             Log.d(TAG, "Gps disabled");
             mLocationManager.removeUpdates(this);
             mIsGpsUpdaterSetup = false;
@@ -259,13 +312,13 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
     private boolean isBetterLocation(Location location, Location currentBestLocation) {
 
-        if(currentBestLocation == null) {
+        if (currentBestLocation == null) {
             return true;
         }
 
         // if location is the same
-        if(location.getLatitude() == currentBestLocation.getLatitude() &&
-           location.getLongitude() == currentBestLocation.getLatitude()) {
+        if (location.getLatitude() == currentBestLocation.getLatitude() &&
+                location.getLongitude() == currentBestLocation.getLatitude()) {
             return false;
         }
 
@@ -276,14 +329,14 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
     @Override
     public void onLocationChanged(Location location) {
-        if(location != null) {
+        if (location != null) {
             Log.d("Lobby", "New Location " + locationToString(location));
 
             if (isBetterLocation(location, mCurrentBestLocation)) {
 
                 mCurrentBestLocation = location;
 
-                if(mServerConnection != null) {
+                if (mServerConnection != null) {
                     if (mRequestUpdatePlayersTask == null) { // Only update players if the last request is done.
                         mRequestUpdatePlayersTask = new RequestUpdatePlayersTask();
                         mRequestUpdatePlayersTask.execute(location);
@@ -299,8 +352,8 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     protected void updatePlayerMarkers(List<PlayerData> players) {
 
         // Remove ALL player markers
-        if(mPlayerMarkers.size() > 0) {
-            for(Marker marker : mPlayerMarkers) {
+        if (mPlayerMarkers.size() > 0) {
+            for (Marker marker : mPlayerMarkers) {
                 marker.remove();
             }
         }
@@ -308,7 +361,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         mPlayerMarkers.clear();
 
         // Re-add all players
-        for(PlayerData player : players) {
+        for (PlayerData player : players) {
             Marker playerMarker = mGoogleMap.addMarker(new MarkerOptions()
                     .position(new LatLng(player.location.getLatitude(), player.location.getLongitude()))
                     .title(player.username));
@@ -321,12 +374,14 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
      * Called when GPS Provider is changed. NETWORK_PROVIDER / GPS_PROVIDER
      */
     @Override
-    public void onStatusChanged(String s, int i, Bundle bundle) { }
+    public void onStatusChanged(String s, int i, Bundle bundle) {
+    }
 
     @Override
     public void onProviderEnabled(String s) {
         Log.d(TAG, "onProviderEnabled: " + s);
     }
+
     @Override
     public void onProviderDisabled(String s) {
         Log.d(TAG, "onProviderDisabled: " + s);
@@ -334,7 +389,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
 
     private void updateMapPositionAndMarker(Location location) {
-        if(mYouMarker != null)
+        if (mYouMarker != null)
             mYouMarker.remove();
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(new LatLng(location.getLatitude(), location.getLongitude()))
@@ -354,7 +409,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     class ConnectToServerTask extends AsyncTask<Void, Void, Void> {
 
         @Override
-        protected void onPreExecute () {
+        protected void onPreExecute() {
             mConnectedToServerTextView.setTextColor(Color.CYAN);
             mConnectedToServerTextView.setText("Connecting...");
             Log.d(TAG, "Trying to connect to server");
@@ -366,14 +421,12 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         protected Void doInBackground(Void... voids) {
 
             try {
-                if(mServerConnection == null) {
+                if (mServerConnection == null) {
                     mServerConnection = new ServerConnection(mLoginSession);
-                }
-                else {
+                } else {
                     mServerConnection.reconnect();
                 }
             } catch (IOException e) {
-                e.printStackTrace();
                 Log.d(TAG, "The d");
             }
             return null;
@@ -381,13 +434,12 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
 
         @Override
         protected void onPostExecute(Void v) {
-            if(mServerConnection == null || !mServerConnection.isConnected()) {
+            if (mServerConnection == null || !mServerConnection.isConnected()) {
                 mConnectedToServerTextView.setTextColor(Color.RED);
                 mConnectedToServerTextView.setText("Failed connecting");
                 Log.e(TAG, "Failed connecting to server!!!!!");
                 completelyStopUpdatingGpsLocation();
-            }
-            else {
+            } else {
                 mConnectedToServerTextView.setTextColor(Color.GREEN);
                 mConnectedToServerTextView.setText("Connected");
                 Log.d(TAG, "Connected to server!!!!!");
@@ -419,7 +471,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         @Override
         protected void onPostExecute(Void v) {
 
-            if(players != null) {
+            if (players != null) {
                 updatePlayerMarkers(players);
                 mPlayerCountTextView.setText(String.valueOf(players.size()));
 
@@ -435,46 +487,97 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         }
     }
 
-    class SearchGameTask extends AsyncTask<String, Void, Void> {
+    class SearchGameTask extends AsyncTask<String, Void, Boolean> {
+
+        public void cancelSearch()  {
+            if(mMatchmakingConnection != null) {
+                try {
+                    mMatchmakingConnection.stopSearchingForGame();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
 
         @Override
         protected void onPreExecute () {
-
-            // Stop other background tasks
-            completelyStopUpdatingGpsLocation();
-
-            mProgressBarLayout.animate().y(0);
+            showSearchGameLayout();
         }
 
         @Override
-        protected Void doInBackground(String... gameTypes) {
+        protected Boolean doInBackground(String... gameTypes) {
 
+            Boolean foundGame = false;
             String gameType = gameTypes[0];
-            mServerConnection.sendSearchingForGame(gameType);
-
             try {
-                Thread.sleep(5000);
-                //TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+                mMatchmakingConnection = new MatchmakingConnection(mLoginSession);
+                foundGame = mMatchmakingConnection.startSearching(gameType);
+
+                if(!foundGame) {
+                    Log.e(TAG, "Problem finding game");
+                }
+
+            } catch (IOException e) {
+                // e.printStackTrace();
+                Log.e(TAG, "Stopped searching");
             }
 
-            return null;
+            return foundGame;
         }
 
         @Override
-        protected void onPostExecute(Void v) {
+        protected void onPostExecute(Boolean foundGame) {
 
-            mProgressBarLayout.animate().y(-400);
+            hideSearchGameLayout();
 
-            Intent intent = new Intent(LobbyActivity.this, AndroidLauncher.class);
-            startActivity(intent);
+            if(foundGame) {
+                try { Thread.sleep(500); }
+                catch (InterruptedException e) { e.printStackTrace();  }
+
+                showAcceptGameLayout();
+            }
+            else {
+                Toast.makeText(getApplicationContext(), "No game found", Toast.LENGTH_LONG).show();
+            }
+
+            showAcceptGameLayout();
 
             mSearchGameTask = null;
         }
     }
 
+    class AcceptGameTask extends AsyncTask<Boolean, Void, Boolean> {
 
+        @Override
+        protected Boolean doInBackground(Boolean... gameAccepted) {
+
+            Boolean accepted = gameAccepted[0];
+
+            boolean confirmation = false;
+            try {
+                confirmation = mMatchmakingConnection.sendAcceptGameCommand(accepted);
+            } catch (IOException e) {
+                Log.e(TAG, "Game declined by other player");
+            }
+
+            return confirmation;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean confirmation) {
+
+            if(confirmation) {
+                //TODO: Start game
+                Log.d(TAG, "Start game? " + confirmation);
+            }
+            else {
+                //TODO: Game not accepted by one of the players
+            }
+
+            hideAcceptGameLayout();
+            mAcceptGameTask = null;
+        }
+    }
 
     private void showActivateGpsAlert() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);

@@ -17,15 +17,15 @@ import java.util.List;
  * Created by Rutger on 24-10-2014.
  */
 public class ServerConnection {
-    private final String TAG = "ConnectionService";
+    private final String TAG = "ServerConnection";
 
-    public static final String HOSTNAME = "192.168.1.127"; //TODO: static ip from raspberry/server
+    public static final String HOSTNAME = "192.168.1.126"; //TODO: static ip from raspberry/server
     public static final int PORT = 8881;
 
     LoginSession mLoginSession;
 
     SocketAddress socketAddress;
-    Socket socket = new Socket();
+    Socket socket;
 
     InputStreamReader inputStreamRaw;
     OutputStreamWriter outputStreamRaw;
@@ -43,6 +43,7 @@ public class ServerConnection {
 
     public void reconnect() throws IOException {
         socketAddress = new InetSocketAddress(HOSTNAME, PORT);
+        socket = new Socket();
         socket.connect(socketAddress);
 
         inputStreamRaw = new InputStreamReader(socket.getInputStream());
@@ -50,6 +51,7 @@ public class ServerConnection {
         in = new BufferedReader(inputStreamRaw);
         out = new PrintWriter(outputStreamRaw);
 
+        out.println("lobbySession");
         out.println(mLoginSession.getSessionId());
         out.flush();
         isConnected = true;
@@ -85,7 +87,7 @@ public class ServerConnection {
 
         String nearbyPlayersString = in.readLine();
 
-                List<PlayerData> playerList = new ArrayList<PlayerData>();
+        List<PlayerData> playerList = new ArrayList<PlayerData>();
 
         if(!nearbyPlayersString.equals("Empty")) {
             String[] players = nearbyPlayersString.split(";");
@@ -103,18 +105,6 @@ public class ServerConnection {
         }
 
         return playerList;
-    }
-
-    public void sendSearchingForGame(String gameType) {
-        //TODO: User clicked play button, send search request to server
-
-        out.println("searchGame");
-        out.flush();
-    }
-
-    public void stopSearchingForGame() {
-        out.println("stopSearchGame");
-        out.flush();
     }
 }
 

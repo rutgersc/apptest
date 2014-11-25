@@ -145,7 +145,7 @@
         <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:id="@+id/progressBarLayout"
+            android:id="@+id/searchGameLayout"
             android:background="#ff111416"
             android:translationY="-400dp">
 
@@ -180,6 +180,53 @@
                     android:layout_centerHorizontal="true" />
 
             </RelativeLayout>
+
+        </RelativeLayout>
+
+    </RelativeLayout>
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/acceptGameLayout"
+        android:background="#ff233035">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:text="Found a game!"
+                android:layout_marginTop="5dp"
+                android:layout_centerHorizontal="true"
+                android:id="@+id/foundGameTextView" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/foundGameTextView"
+                android:orientation="vertical">
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Accept"
+                    android:id="@+id/acceptGameButton"
+                    android:textSize="40dp"
+                    android:layout_centerHorizontal="true" />
+
+                <Button
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Cancel"
+                    android:id="@+id/declineGameButton"
+                    android:textSize="40dp"
+                    android:layout_centerHorizontal="true"
+                    android:layout_marginTop="10dp" />
+            </LinearLayout>
 
         </RelativeLayout>
 
