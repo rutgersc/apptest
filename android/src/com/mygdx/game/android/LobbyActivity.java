@@ -28,6 +28,7 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.mygdx.game.GameLauncher;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
     ServerConnection mServerConnection;
     LoginSession mLoginSession;
     SearchGameTask mSearchGameTask = null;
-    MatchmakingConnection mMatchmakingConnection;
+    public static MatchmakingConnection mMatchmakingConnection;
     AcceptGameTask mAcceptGameTask = null;
 
     RelativeLayout topLayout;
@@ -565,8 +566,10 @@ public class LobbyActivity extends FragmentActivity implements LocationListener 
         protected void onPostExecute(Boolean confirmation) {
 
             if(confirmation) {
-                //TODO: Start game
+                // Starting game!
                 Toast.makeText(getApplicationContext(), "Start Game!", Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(LobbyActivity.this, AndroidLauncher.class);
+                startActivity(intent);
             }
             else {
                 //TODO: Game not accepted by one of the players
