@@ -36,7 +36,7 @@
             </activity>
 
             <activity
-                android:name=".LoginActivity"
+                android:name="nl.ciwan.game.android.LoginActivity"
                 android:label="@string/title_activity_login" >
                 <intent-filter>
                     <action android:name="android.intent.action.MAIN" />
@@ -45,7 +45,7 @@
             </activity>
 
             <activity
-                android:name=".LobbyActivity"
+                android:name="nl.ciwan.game.android.LobbyActivity"
                 android:label="@string/title_activity_lobby" >
             </activity>
 
